@@ -431,6 +431,63 @@
     justify-content:center;
   }
 
+  /* ---------- BANNIÈRE ALERTE (semaine incomplète) ---------- */
+  .banniere-alerte{
+    max-width:900px;
+    margin:14px auto 0;
+    padding:10px 18px;
+    background:#fff3e0;
+    color:#b45309;
+    border:1px solid #fcd9a8;
+    border-radius:12px;
+    font-size:.85rem;
+    text-align:center;
+  }
+
+  /* ---------- MODALE LARGE (vue d'ensemble / historique) ---------- */
+  .modal-large{width:min(760px,94vw);}
+
+  .mois-titre{
+    font-size:.85rem;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    color:var(--vert-fonce);
+    margin:18px 0 10px;
+  }
+  .mois-titre:first-child{margin-top:0;}
+  .grille-semaines{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+    gap:10px;
+  }
+  .carte-semaine-mini{
+    border:1px solid #e2e2e2;
+    background:#fff;
+    border-radius:10px;
+    padding:10px 12px;
+    text-align:left;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    font-family:inherit;
+    transition:transform .12s, box-shadow .12s;
+  }
+  .carte-semaine-mini:hover{transform:translateY(-2px);box-shadow:var(--ombre);}
+  .carte-semaine-mini .dates-mini{font-size:.8rem;font-weight:600;color:var(--texte);}
+  .badge-statut{
+    align-self:flex-start;
+    font-size:.72rem;
+    padding:3px 8px;
+    border-radius:20px;
+    font-weight:600;
+  }
+  .statut-complet .badge-statut{background:#e3f6e8;color:#1e7e42;}
+  .statut-incomplet .badge-statut{background:#fff3e0;color:#b45309;}
+  .statut-vide .badge-statut{background:#f1f1f1;color:#8a8a8a;}
+  .statut-vacances .badge-statut{background:var(--vert-clair);color:var(--vert-fonce);}
+  .statut-vacances{opacity:.75;}
+
   footer{
     text-align:center;
     color:var(--gris);
@@ -500,9 +557,11 @@
   <button id="semaineSuiv">›</button>
 </div>
 
+<div id="bannierePartielle" class="banniere-alerte" style="display:none;"></div>
+
 <main id="grilleJours"></main>
 
-<footer>© Collège Victor Duruy --- Menus du collèges</footer>
+<footer>Fait avec ❤️ pour le collège — les menus sont susceptibles d'évoluer</footer>
 
 <!-- Zone utilisée uniquement pour générer le PDF (impression) -->
 <div id="zonePdf">
@@ -525,13 +584,13 @@
 <div id="overlay"></div>
 <div id="sidebar">
   <button id="btnFermerSidebar">✕</button>
-  <h2>Espace gestionnaire</h2>
+  <h2>Espace administration</h2>
 
   <div id="zoneConnexion">
-    <label for="champEmailAdmin"I>Identifiant</label>
-    <input type="email" id="champEmailAdmin" placeholder="        " autocomplete="username">
+    <label for="champEmailAdmin">Email admin</label>
+    <input type="email" id="champEmailAdmin" placeholder="admin@exemple.fr" autocomplete="username">
     <label for="champCode">Mot de passe</label>
-    <input type="password" id="champCode" placeholder="         " autocomplete="current-password">
+    <input type="password" id="champCode" placeholder="Mot de passe" autocomplete="current-password">
     <div id="erreurCode">Identifiants incorrects.</div>
     <button class="btn" id="btnValiderCode">Se connecter</button>
   </div>
@@ -541,8 +600,10 @@
     <p style="font-size:.82rem;color:var(--gris);">Modifiez directement les champs de chaque jour sur la page, puis enregistrez.</p>
     <button class="btn" id="btnEnregistrer">💾 Enregistrer la semaine</button>
     <div id="messageSauvegarde">Menu enregistré ✔</div>
-    <button class="btn" id="btnPdf" style="background:var(--orange);">📄 Générer le menus en PDF</button>
+    <button class="btn" id="btnPdf" style="background:var(--orange);">📄 Générer le PDF de la semaine</button>
     <button class="btn" id="btnCalendrier" style="background:var(--vert-fonce);">📅 Gestion du calendrier</button>
+    <button class="btn" id="btnVueEnsemble" style="background:var(--vert-fonce);">🗓️ Vue d'ensemble de l'année</button>
+    <button class="btn" id="btnHistorique" style="background:var(--vert-fonce);">🕒 Historique des modifications</button>
     <button class="btn" id="btnDeconnexion">Se déconnecter</button>
   </div>
 </div>
@@ -551,7 +612,7 @@
 <div id="overlayCalendrier" class="overlay-modal"></div>
 <div id="modalCalendrier" class="modal">
   <div class="modal-entete">
-    <h2>📅 Gestion du calendrier</h2>
+    <h2>📅 Gestion du calendrier scolaire</h2>
     <button id="btnFermerCalendrier">✕</button>
   </div>
   <div class="modal-corps">
@@ -560,7 +621,7 @@
       <h3>Année scolaire</h3>
       <div class="ligne-champs">
         <div>
-          <label for="champDebutAnnee">Début d'année</label>
+          <label for="champDebutAnnee">Rentrée</label>
           <input type="date" id="champDebutAnnee">
         </div>
         <div>
@@ -614,10 +675,35 @@
   </div>
 </div>
 
+<!-- Fenêtre modale : vue d'ensemble de l'année -->
+<div id="overlayVueEnsemble" class="overlay-modal"></div>
+<div id="modalVueEnsemble" class="modal modal-large">
+  <div class="modal-entete">
+    <h2>🗓️ Vue d'ensemble de l'année</h2>
+    <button id="btnFermerVueEnsemble">✕</button>
+  </div>
+  <div class="modal-corps" id="corpsVueEnsemble">
+    <p class="aide">Chargement…</p>
+  </div>
+</div>
+
+<!-- Fenêtre modale : historique des modifications -->
+<div id="overlayHistorique" class="overlay-modal"></div>
+<div id="modalHistorique" class="modal modal-large">
+  <div class="modal-entete">
+    <h2>🕒 Historique des modifications</h2>
+    <button id="btnFermerHistorique">✕</button>
+  </div>
+  <div class="modal-corps" id="corpsHistorique">
+    <p class="aide">Chargement…</p>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, doc, setDoc, onSnapshot
+  getFirestore, doc, setDoc, onSnapshot,
+  collection, getDocs, addDoc, query, orderBy, limit, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
@@ -661,9 +747,19 @@ function ecouterSemaine(cle){
   });
 }
 
+let calendrierChargeInitialement = false;
+
 onSnapshot(doc(db,'config','calendrier'), (snap)=>{
   calendrier = snap.exists() ? snap.data() : { debutAnnee:"", finAnnee:"", vacances:[], feries:[] };
-  construireGrille();
+
+  if(!calendrierChargeInitialement){
+    calendrierChargeInitialement = true;
+    const depart = calendrier.debutAnnee ? new Date(calendrier.debutAnnee) : new Date();
+    definirSemaine(depart);
+  } else {
+    construireGrille();
+  }
+
   if(document.getElementById('modalCalendrier').classList.contains('ouvert')){
     document.getElementById('champDebutAnnee').value = calendrier.debutAnnee || "";
     document.getElementById('champFinAnnee').value = calendrier.finAnnee || "";
@@ -757,6 +853,26 @@ function offsetJour(nomJour){
   return map[nomJour];
 }
 
+function calculerStatutSemaine(lundi, donneesSemaine){
+  let totalChamps = 0, remplis = 0, tousSpeciaux = true;
+  JOURS.forEach(nomJour=>{
+    const dateJour = new Date(lundi);
+    dateJour.setDate(lundi.getDate() + offsetJour(nomJour));
+    if(infoJourSpecial(dateJour)) return;
+    tousSpeciaux = false;
+    CATEGORIES.forEach(cat=>{
+      totalChamps++;
+      if(donneesSemaine[nomJour] && donneesSemaine[nomJour][cat.cle] && donneesSemaine[nomJour][cat.cle].trim()){
+        remplis++;
+      }
+    });
+  });
+  if(tousSpeciaux) return {classe:'vacances', label:'🏖️ Vacances'};
+  if(remplis === 0) return {classe:'vide', label:'Vide'};
+  if(remplis === totalChamps) return {classe:'complet', label:'✔ Complet'};
+  return {classe:'incomplet', label:`⚠ Incomplet (${remplis}/${totalChamps})`};
+}
+
 function construireGrille(){
   const grille = document.getElementById('grilleJours');
   grille.innerHTML = "";
@@ -820,6 +936,15 @@ function construireGrille(){
   });
 
   document.body.classList.toggle('mode-admin', estConnecte);
+
+  const banniere = document.getElementById('bannierePartielle');
+  const statutSemaine = calculerStatutSemaine(dateReference, donneesSemaine);
+  if(estConnecte && statutSemaine.classe === 'incomplet'){
+    banniere.style.display = 'block';
+    banniere.textContent = `⚠️ Cette semaine n'est pas complète : ${statutSemaine.label}`;
+  } else {
+    banniere.style.display = 'none';
+  }
 }
 
 function yADesModifNonEnregistrees(){
@@ -913,17 +1038,40 @@ document.getElementById('btnDeconnexion').addEventListener('click', async ()=>{
 
 document.getElementById('btnEnregistrer').addEventListener('click', async ()=>{
   const cle = cleSemaine(dateReference);
-  const donnees = baseDonnees[cle] ? {...baseDonnees[cle]} : {};
+  const ancien = baseDonnees[cle] ? {...baseDonnees[cle]} : {};
+  const donnees = {...ancien};
+  const modifications = [];
 
   document.querySelectorAll('#grilleJours textarea').forEach(zone=>{
     const jour = zone.dataset.jour;
     const cat = zone.dataset.cat;
+    const catLabel = (CATEGORIES.find(c=>c.cle===cat) || {}).label || cat;
+    const nouvelleValeur = zone.value.trim();
+    const ancienneValeur = (ancien[jour] && ancien[jour][cat]) || "";
+
     if(!donnees[jour]) donnees[jour] = {};
-    donnees[jour][cat] = zone.value.trim();
+    donnees[jour][cat] = nouvelleValeur;
+
+    if(nouvelleValeur !== ancienneValeur){
+      modifications.push({jour, categorie:catLabel, ancienneValeur, nouvelleValeur});
+    }
   });
 
   try{
     await setDoc(doc(db,'semaines',cle), donnees);
+
+    for(const m of modifications){
+      await addDoc(collection(db,'journal'), {
+        horodatage: serverTimestamp(),
+        utilisateur: auth.currentUser ? auth.currentUser.email : 'inconnu',
+        semaine: cle,
+        jour: m.jour,
+        categorie: m.categorie,
+        ancienneValeur: m.ancienneValeur,
+        nouvelleValeur: m.nouvelleValeur
+      });
+    }
+
     const msg = document.getElementById('messageSauvegarde');
     msg.style.display = 'block';
     setTimeout(()=> msg.style.display = 'none', 2500);
@@ -977,6 +1125,132 @@ window.addEventListener('beforeunload', (e)=>{
     e.returnValue = '';
   }
 });
+
+/* ================= VUE D'ENSEMBLE DE L'ANNÉE ================= */
+const overlayVueEnsemble = document.getElementById('overlayVueEnsemble');
+const modalVueEnsemble = document.getElementById('modalVueEnsemble');
+
+function genererSemainesAnnee(){
+  if(!calendrier.debutAnnee || !calendrier.finAnnee) return [];
+  const debut = getLundiDeSemaine(new Date(calendrier.debutAnnee));
+  const fin = new Date(calendrier.finAnnee);
+  const semaines = [];
+  let curseur = new Date(debut);
+  while(curseur <= fin){
+    semaines.push(new Date(curseur));
+    curseur = new Date(curseur);
+    curseur.setDate(curseur.getDate()+7);
+  }
+  return semaines;
+}
+
+async function ouvrirVueEnsemble(){
+  fermerSidebar();
+  overlayVueEnsemble.classList.add('actif');
+  modalVueEnsemble.classList.add('ouvert');
+
+  const conteneur = document.getElementById('corpsVueEnsemble');
+  const semaines = genererSemainesAnnee();
+
+  if(semaines.length === 0){
+    conteneur.innerHTML = '<p class="aide">Configure d’abord les dates de l’année scolaire dans "Gestion du calendrier".</p>';
+    return;
+  }
+
+  conteneur.innerHTML = '<p class="aide">Chargement…</p>';
+  try{
+    const snap = await getDocs(collection(db,'semaines'));
+    const toutesLesSemaines = {};
+    snap.forEach(d=> toutesLesSemaines[d.id] = d.data());
+
+    const parMois = {};
+    semaines.forEach(lundi=>{
+      const cle = cleSemaine(lundi);
+      const moisLabel = lundi.toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+      if(!parMois[moisLabel]) parMois[moisLabel] = [];
+      parMois[moisLabel].push({lundi, cle});
+    });
+
+    let html = "";
+    Object.entries(parMois).forEach(([mois, listeSemaines])=>{
+      html += `<h4 class="mois-titre">${mois}</h4><div class="grille-semaines">`;
+      listeSemaines.forEach(({lundi, cle})=>{
+        const vendredi = new Date(lundi); vendredi.setDate(lundi.getDate()+4);
+        const statut = calculerStatutSemaine(lundi, toutesLesSemaines[cle] || {});
+        html += `
+          <button class="carte-semaine-mini statut-${statut.classe}" data-date="${lundi.toISOString()}">
+            <span class="dates-mini">${formatDate(lundi)} – ${formatDate(vendredi)}</span>
+            <span class="badge-statut">${statut.label}</span>
+          </button>`;
+      });
+      html += `</div>`;
+    });
+    conteneur.innerHTML = html;
+
+    conteneur.querySelectorAll('.carte-semaine-mini').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(!confirmerAbandon()) return;
+        definirSemaine(new Date(btn.dataset.date));
+        fermerModalVueEnsemble();
+      });
+    });
+  }catch(err){
+    conteneur.innerHTML = `<p class="aide">Erreur de chargement : ${echapperHtml(err.message)}</p>`;
+  }
+}
+function fermerModalVueEnsemble(){
+  overlayVueEnsemble.classList.remove('actif');
+  modalVueEnsemble.classList.remove('ouvert');
+}
+document.getElementById('btnVueEnsemble').addEventListener('click', ouvrirVueEnsemble);
+document.getElementById('btnFermerVueEnsemble').addEventListener('click', fermerModalVueEnsemble);
+overlayVueEnsemble.addEventListener('click', fermerModalVueEnsemble);
+
+/* ================= HISTORIQUE DES MODIFICATIONS ================= */
+const overlayHistorique = document.getElementById('overlayHistorique');
+const modalHistorique = document.getElementById('modalHistorique');
+
+async function ouvrirHistorique(){
+  fermerSidebar();
+  overlayHistorique.classList.add('actif');
+  modalHistorique.classList.add('ouvert');
+
+  const conteneur = document.getElementById('corpsHistorique');
+  conteneur.innerHTML = '<p class="aide">Chargement…</p>';
+
+  try{
+    const q = query(collection(db,'journal'), orderBy('horodatage','desc'), limit(50));
+    const snap = await getDocs(q);
+    if(snap.empty){
+      conteneur.innerHTML = '<p class="aide">Aucune modification enregistrée pour l’instant.</p>';
+      return;
+    }
+    let html = '<ul class="liste-calendrier">';
+    snap.forEach(d=>{
+      const e = d.data();
+      const date = (e.horodatage && e.horodatage.toDate) ? e.horodatage.toDate().toLocaleString('fr-FR') : '';
+      const ancienne = e.ancienneValeur ? `"${echapperHtml(e.ancienneValeur)}" → ` : 'ajouté : ';
+      html += `<li style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <span class="infos-item" style="width:100%;">
+          <strong>${echapperHtml(e.utilisateur||'')}</strong> — ${echapperHtml(e.semaine||'')} · ${echapperHtml(e.jour||'')} · ${echapperHtml(e.categorie||'')}
+          <small>${date}</small>
+        </span>
+        <span style="font-size:.82rem;color:var(--texte);">${ancienne}"${echapperHtml(e.nouvelleValeur)}"</span>
+      </li>`;
+    });
+    html += '</ul>';
+    conteneur.innerHTML = html;
+  }catch(err){
+    conteneur.innerHTML = `<p class="aide">Erreur de chargement : ${echapperHtml(err.message)}</p>`;
+  }
+}
+function fermerModalHistorique(){
+  overlayHistorique.classList.remove('actif');
+  modalHistorique.classList.remove('ouvert');
+}
+document.getElementById('btnHistorique').addEventListener('click', ouvrirHistorique);
+document.getElementById('btnFermerHistorique').addEventListener('click', fermerModalHistorique);
+overlayHistorique.addEventListener('click', fermerModalHistorique);
 
 /* ================= GESTION DU CALENDRIER ================= */
 const overlayCalendrier = document.getElementById('overlayCalendrier');
@@ -1161,7 +1435,7 @@ document.getElementById('btnAutoFeries').addEventListener('click', ()=>{
 });
 
 /* ================= INITIALISATION ================= */
-definirSemaine(dateReference);
+majLabelSemaine();
 </script>
 </body>
 </html>
