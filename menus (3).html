@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menus de la cantine</title>
+<style>
+  :root{
+    --vert:#1f6f78;
+    --vert-clair:#e6f2f1;
+    --vert-fonce:#134048;
+    --orange:#f2814f;
+    --fond:#fbf7f0;
+    --carte:#ffffff;
+    --texte:#2c2c2c;
+    --gris:#8a8a8a;
+    --ombre:0 4px 16px rgba(0,0,0,0.07);
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:var(--fond);
+    color:var(--texte);
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+
+  /* ---------- HEADER ---------- */
+  header{
+    background:linear-gradient(135deg,var(--vert) 0%,var(--vert-fonce) 100%);
+    color:#fff;
+    padding:18px 20px 22px 60px;
+    position:relative;
+    box-shadow:var(--ombre);
+  }
+  header h1{
+    font-size:1.4rem;
+    font-weight:700;
+    letter-spacing:.3px;
+  }
+  header p{
+    font-size:.85rem;
+    opacity:.85;
+    margin-top:2px;
+  }
+
+  /* Icône menu (admin) */
+  #btnMenu{
+    position:absolute;
+    top:16px;
+    left:14px;
+    width:36px;
+    height:36px;
+    background:rgba(255,255,255,.15);
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .2s;
+  }
+  #btnMenu:hover{background:rgba(255,255,255,.28);}
+  #btnMenu span{
+    display:block;
+    width:18px;
+    height:2px;
+    background:#fff;
+    position:relative;
+  }
+  #btnMenu span::before,#btnMenu span::after{
+    content:"";
+    position:absolute;
+    width:18px;
+    height:2px;
+    background:#fff;
+    left:0;
+  }
+  #btnMenu span::before{top:-6px;}
+  #btnMenu span::after{top:6px;}
+
+  /* ---------- NAVIGATION SEMAINE ---------- */
+  .nav-semaine{
+    max-width:900px;
+    margin:20px auto 0;
+    padding:0 16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+  }
+  .nav-semaine button{
+    background:var(--carte);
+    border:1px solid #e2e2e2;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    font-size:1.1rem;
+    cursor:pointer;
+    box-shadow:var(--ombre);
+    transition:transform .15s;
+    color:var(--vert-fonce);
+  }
+  .nav-semaine button:hover{transform:scale(1.08);}
+  .semaine-label{
+    background:var(--carte);
+    padding:10px 20px;
+    border-radius:30px;
+    box-shadow:var(--ombre);
+    font-weight:600;
+    font-size:.95rem;
+    text-align:center;
+    min-width:220px;
+  }
+  .semaine-label small{
+    display:block;
+    font-weight:400;
+    color:var(--gris);
+    font-size:.75rem;
+    margin-top:2px;
+  }
+
+  /* ---------- GRILLE DES JOURS ---------- */
+  main{
+    max-width:1100px;
+    margin:28px auto;
+    padding:0 16px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:18px;
+  }
+  .jour-carte{
+    background:var(--carte);
+    border-radius:var(--radius);
+    box-shadow:var(--ombre);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    transition:transform .18s;
+  }
+  .jour-carte:hover{transform:translateY(-3px);}
+  .jour-entete{
+    background:var(--vert);
+    color:#fff;
+    padding:14px 16px;
+    font-weight:700;
+    font-size:1.05rem;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .jour-entete .date-jour{
+    font-size:.75rem;
+    font-weight:400;
+    opacity:.85;
+  }
+  .jour-corps{
+    padding:14px 16px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    flex:1;
+  }
+  .plat-bloc{
+    border-left:3px solid var(--orange);
+    padding-left:10px;
+  }
+  .plat-bloc .etiquette{
+    font-size:.7rem;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:var(--orange);
+    font-weight:700;
+    margin-bottom:2px;
+  }
+  .plat-bloc .contenu{
+    font-size:.92rem;
+    line-height:1.35;
+    color:var(--texte);
+    min-height:18px;
+  }
+  .plat-bloc .contenu.vide{
+    color:var(--gris);
+    font-style:italic;
+  }
+  .plat-bloc textarea{
+    width:100%;
+    border:1px solid #ddd;
+    border-radius:8px;
+    padding:6px 8px;
+    font-family:inherit;
+    font-size:.88rem;
+    resize:vertical;
+    min-height:36px;
+  }
+
+  /* ---------- SIDEBAR ADMIN ---------- */
+  #overlay{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.35);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s;
+    z-index:40;
+  }
+  #overlay.actif{opacity:1;pointer-events:auto;}
+
+  #sidebar{
+    position:fixed;
+    top:0;left:0;
+    width:290px;
+    height:100%;
+    background:var(--carte);
+    box-shadow:4px 0 20px rgba(0,0,0,.15);
+    transform:translateX(-100%);
+    transition:transform .28s ease;
+    z-index:50;
+    display:flex;
+    flex-direction:column;
+    padding:22px;
+  }
+  #sidebar.ouvert{transform:translateX(0);}
+  #sidebar h2{
+    color:var(--vert-fonce);
+    font-size:1.1rem;
+    margin-bottom:16px;
+  }
+  #sidebar label{
+    font-size:.82rem;
+    color:var(--gris);
+    margin-bottom:6px;
+    display:block;
+  }
+  #sidebar input[type=password]{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid #ddd;
+    border-radius:10px;
+    font-size:.95rem;
+    margin-bottom:10px;
+  }
+  #sidebar .btn{
+    background:var(--vert);
+    color:#fff;
+    border:none;
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:.9rem;
+    transition:background .2s;
+  }
+  #sidebar .btn:hover{background:var(--vert-fonce);}
+  #erreurCode{
+    color:#c0392b;
+    font-size:.8rem;
+    margin-bottom:8px;
+    display:none;
+  }
+  #zoneConnecte{display:none;flex-direction:column;gap:10px;}
+  #zoneConnecte .statut{
+    background:var(--vert-clair);
+    color:var(--vert-fonce);
+    padding:10px 12px;
+    border-radius:10px;
+    font-size:.85rem;
+    font-weight:600;
+  }
+  #btnFermerSidebar{
+    align-self:flex-end;
+    background:none;
+    border:none;
+    font-size:1.3rem;
+    cursor:pointer;
+    color:var(--gris);
+    margin-bottom:6px;
+  }
+  #btnDeconnexion{
+    background:#eee;
+    color:#555;
+  }
+  #btnDeconnexion:hover{background:#e0e0e0;}
+  #btnEnregistrer{
+    margin-top:auto;
+  }
+  #messageSauvegarde{
+    font-size:.8rem;
+    color:var(--vert-fonce);
+    text-align:center;
+    display:none;
+  }
+
+  .mode-admin .plat-bloc .contenu{display:none;}
+  .mode-admin .plat-bloc textarea{display:block;}
+  .plat-bloc textarea{display:none;}
+
+  /* ---------- JOUR SPÉCIAL (vacances / férié / hors année) ---------- */
+  .jour-carte.special .jour-entete{background:var(--gris);}
+  .jour-special-corps{
+    padding:24px 16px;
+    text-align:center;
+    color:var(--gris);
+    font-size:.9rem;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+  .jour-special-corps .emoji{font-size:1.6rem;}
+  .jour-special-corps .nom-special{font-weight:600;color:var(--vert-fonce);}
+
+  /* ---------- MODALE CALENDRIER ---------- */
+  .overlay-modal{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.4);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s;
+    z-index:60;
+  }
+  .overlay-modal.actif{opacity:1;pointer-events:auto;}
+  .modal{
+    position:fixed;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%) scale(.96);
+    width:min(560px,92vw);
+    max-height:85vh;
+    background:var(--carte);
+    border-radius:var(--radius);
+    box-shadow:0 10px 40px rgba(0,0,0,.25);
+    z-index:70;
+    display:flex;
+    flex-direction:column;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s, transform .2s;
+  }
+  .modal.ouvert{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+  .modal-entete{
+    background:var(--vert);
+    color:#fff;
+    padding:16px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .modal-entete h2{font-size:1.05rem;}
+  .modal-entete button{
+    background:none;border:none;color:#fff;
+    font-size:1.2rem;cursor:pointer;
+  }
+  .modal-corps{
+    padding:18px 20px 24px;
+    overflow-y:auto;
+  }
+  .modal-corps section{
+    margin-bottom:22px;
+    padding-bottom:18px;
+    border-bottom:1px solid #eee;
+  }
+  .modal-corps section:last-child{border-bottom:none;margin-bottom:0;}
+  .modal-corps h3{
+    font-size:.92rem;
+    color:var(--vert-fonce);
+    margin-bottom:10px;
+  }
+  .ligne-champs{
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .ligne-champs > div{flex:1;}
+  .modal-corps label{
+    font-size:.78rem;
+    color:var(--gris);
+    display:block;
+    margin-bottom:4px;
+  }
+  .modal-corps input[type=date],
+  .modal-corps input[type=text]{
+    width:100%;
+    padding:8px 10px;
+    border:1px solid #ddd;
+    border-radius:8px;
+    font-size:.88rem;
+    font-family:inherit;
+  }
+  .modal-corps .btn{
+    font-size:.85rem;
+    padding:9px 14px;
+  }
+  .aide{
+    font-size:.75rem;
+    color:var(--gris);
+    margin-top:8px;
+  }
+  .liste-calendrier{
+    list-style:none;
+    margin-top:12px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .liste-calendrier li{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--vert-clair);
+    padding:8px 12px;
+    border-radius:8px;
+    font-size:.83rem;
+  }
+  .liste-calendrier li .infos-item{color:var(--vert-fonce);}
+  .liste-calendrier li .infos-item small{display:block;color:var(--gris);font-weight:400;}
+  .liste-calendrier li button{
+    background:none;
+    border:none;
+    color:#c0392b;
+    cursor:pointer;
+    font-size:1rem;
+  }
+  .liste-calendrier .vide{
+    color:var(--gris);
+    font-style:italic;
+    font-size:.82rem;
+    background:none;
+    justify-content:center;
+  }
+
+  footer{
+    text-align:center;
+    color:var(--gris);
+    font-size:.78rem;
+    margin-top:30px;
+  }
+
+  @media(max-width:480px){
+    header{padding-left:56px;}
+    .semaine-label{min-width:170px;font-size:.85rem;}
+  }
+
+  /* ---------- ZONE PDF (impression) ---------- */
+  #zonePdf{display:none;}
+  @media print{
+    body > *:not(#zonePdf){display:none !important;}
+    #zonePdf{
+      display:block !important;
+      padding:20px;
+    }
+    #zonePdf h1{
+      color:var(--vert-fonce);
+      font-size:1.6rem;
+      margin-bottom:2px;
+    }
+    #zonePdf .sous-titre{
+      color:var(--gris);
+      font-size:.9rem;
+      margin-bottom:20px;
+    }
+    #zonePdf table{
+      width:100%;
+      border-collapse:collapse;
+    }
+    #zonePdf th{
+      background:var(--vert);
+      color:#fff;
+      text-align:left;
+      padding:10px;
+      font-size:.85rem;
+    }
+    #zonePdf td{
+      border:1px solid #ddd;
+      padding:10px;
+      font-size:.85rem;
+      vertical-align:top;
+    }
+    #zonePdf td.nom-jour{
+      font-weight:700;
+      background:var(--vert-clair);
+      color:var(--vert-fonce);
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="btnMenu" title="Espace administration"><span></span></button>
+  <h1>🍽️ Menus de la cantine</h1>
+  <p>Collège Victor Duruy</p>
+</header>
+
+<div class="nav-semaine">
+  <button id="semainePrec">‹</button>
+  <div class="semaine-label" id="labelSemaine">Semaine du ...<small>Année scolaire</small></div>
+  <button id="semaineSuiv">›</button>
+</div>
+
+<main id="grilleJours"></main>
+
+<footer>Fait avec ❤️ pour le collège — les menus sont susceptibles d'évoluer</footer>
+
+<!-- Zone utilisée uniquement pour générer le PDF (impression) -->
+<div id="zonePdf">
+  <h1>Menu de la cantine</h1>
+  <div class="sous-titre" id="pdfSousTitre">Semaine du ...</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Jour</th>
+        <th>Entrée</th>
+        <th>Plat</th>
+        <th>Dessert</th>
+      </tr>
+    </thead>
+    <tbody id="pdfCorpsTable"></tbody>
+  </table>
+</div>
+
+<!-- Overlay + sidebar admin -->
+<div id="overlay"></div>
+<div id="sidebar">
+  <button id="btnFermerSidebar">✕</button>
+  <h2>Espace administration</h2>
+
+  <div id="zoneConnexion">
+    <label for="champEmailAdmin">Email admin</label>
+    <input type="email" id="champEmailAdmin" placeholder="admin@exemple.fr" autocomplete="username">
+    <label for="champCode">Mot de passe</label>
+    <input type="password" id="champCode" placeholder="Mot de passe" autocomplete="current-password">
+    <div id="erreurCode">Identifiants incorrects.</div>
+    <button class="btn" id="btnValiderCode">Se connecter</button>
+  </div>
+
+  <div id="zoneConnecte">
+    <div class="statut">✔ Connecté — mode édition activé</div>
+    <p style="font-size:.82rem;color:var(--gris);">Modifiez directement les champs de chaque jour sur la page, puis enregistrez.</p>
+    <button class="btn" id="btnEnregistrer">💾 Enregistrer la semaine</button>
+    <div id="messageSauvegarde">Menu enregistré ✔</div>
+    <button class="btn" id="btnPdf" style="background:var(--orange);">📄 Générer le PDF de la semaine</button>
+    <button class="btn" id="btnCalendrier" style="background:var(--vert-fonce);">📅 Gestion du calendrier</button>
+    <button class="btn" id="btnDeconnexion">Se déconnecter</button>
+  </div>
+</div>
+
+<!-- Fenêtre modale : gestion du calendrier scolaire -->
+<div id="overlayCalendrier" class="overlay-modal"></div>
+<div id="modalCalendrier" class="modal">
+  <div class="modal-entete">
+    <h2>📅 Gestion du calendrier scolaire</h2>
+    <button id="btnFermerCalendrier">✕</button>
+  </div>
+  <div class="modal-corps">
+
+    <section>
+      <h3>Année scolaire</h3>
+      <div class="ligne-champs">
+        <div>
+          <label for="champDebutAnnee">Rentrée</label>
+          <input type="date" id="champDebutAnnee">
+        </div>
+        <div>
+          <label for="champFinAnnee">Fin d'année</label>
+          <input type="date" id="champFinAnnee">
+        </div>
+      </div>
+      <button class="btn" id="btnSauverAnnee">Enregistrer les dates</button>
+      <p class="aide">En dehors de cette période, les semaines affichent "Hors année scolaire" à la place du menu.</p>
+    </section>
+
+    <section>
+      <h3>Vacances scolaires</h3>
+      <div class="ligne-champs">
+        <div>
+          <label for="champNomVacances">Nom</label>
+          <input type="text" id="champNomVacances" placeholder="Ex : Vacances de la Toussaint">
+        </div>
+      </div>
+      <div class="ligne-champs">
+        <div>
+          <label for="champDebutVacances">Début</label>
+          <input type="date" id="champDebutVacances">
+        </div>
+        <div>
+          <label for="champFinVacances">Fin</label>
+          <input type="date" id="champFinVacances">
+        </div>
+      </div>
+      <button class="btn" id="btnAjouterVacances">+ Ajouter la période</button>
+      <ul class="liste-calendrier" id="listeVacances"></ul>
+    </section>
+
+    <section>
+      <h3>Jours fériés</h3>
+      <button class="btn" id="btnAutoFeries" style="background:var(--orange);">✨ Ajouter automatiquement les jours fériés français</button>
+      <div class="ligne-champs" style="margin-top:10px;">
+        <div>
+          <label for="champNomFerie">Nom</label>
+          <input type="text" id="champNomFerie" placeholder="Ex : Armistice">
+        </div>
+        <div>
+          <label for="champDateFerie">Date</label>
+          <input type="date" id="champDateFerie">
+        </div>
+      </div>
+      <button class="btn" id="btnAjouterFerie">+ Ajouter le jour férié</button>
+      <ul class="liste-calendrier" id="listeFeries"></ul>
+    </section>
+
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, doc, setDoc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+/* ================= FIREBASE ================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyAmOC6Mv_FzjX9glWjMf0DzqNcwWo4pvAk",
+  authDomain: "menus-34ecb.firebaseapp.com",
+  projectId: "menus-34ecb",
+  storageBucket: "menus-34ecb.firebasestorage.app",
+  messagingSenderId: "261927865899",
+  appId: "1:261927865899:web:42af2666c68f807180e46e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+/* ================= CONFIG ================= */
+const JOURS = ["Lundi","Mardi","Jeudi","Vendredi"]; // pas de mercredi
+const CATEGORIES = [
+  {cle:"entree", label:"Entrée"},
+  {cle:"plat", label:"Plat"},
+  {cle:"dessert", label:"Dessert"}
+];
+
+/* ================= ÉTAT ================= */
+let dateReference = getLundiDeSemaine(new Date());
+let estConnecte = false;
+let baseDonnees = {};
+let calendrier = { debutAnnee:"", finAnnee:"", vacances:[], feries:[] };
+let desabonnerSemaine = null;
+
+function ecouterSemaine(cle){
+  if(desabonnerSemaine) desabonnerSemaine();
+  desabonnerSemaine = onSnapshot(doc(db,'semaines',cle), (snap)=>{
+    baseDonnees[cle] = snap.exists() ? snap.data() : {};
+    construireGrille();
+  }, (err)=>{
+    console.error("Erreur de lecture des menus :", err);
+  });
+}
+
+onSnapshot(doc(db,'config','calendrier'), (snap)=>{
+  calendrier = snap.exists() ? snap.data() : { debutAnnee:"", finAnnee:"", vacances:[], feries:[] };
+  construireGrille();
+  if(document.getElementById('modalCalendrier').classList.contains('ouvert')){
+    document.getElementById('champDebutAnnee').value = calendrier.debutAnnee || "";
+    document.getElementById('champFinAnnee').value = calendrier.finAnnee || "";
+    rafraichirListeVacances();
+    rafraichirListeFeries();
+  }
+}, (err)=>{
+  console.error("Erreur de lecture du calendrier :", err);
+});
+
+async function sauvegarderCalendrier(){
+  try{
+    await setDoc(doc(db,'config','calendrier'), calendrier);
+  }catch(e){
+    alert("Erreur d'enregistrement du calendrier : " + e.message);
+  }
+}
+
+/* ================= DATES ================= */
+function getLundiDeSemaine(d){
+  const date = new Date(d);
+  const jour = date.getDay(); // 0=dim
+  const diff = (jour === 0 ? -6 : 1 - jour);
+  date.setDate(date.getDate() + diff);
+  date.setHours(0,0,0,0);
+  return date;
+}
+function formatDate(d){
+  return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'});
+}
+function cleSemaine(lundi){
+  // Calcul fiable du numéro de semaine ISO 8601
+  const d = new Date(Date.UTC(lundi.getFullYear(), lundi.getMonth(), lundi.getDate()));
+  const jourSemaine = d.getUTCDay() || 7; // lundi=1 ... dimanche=7
+  d.setUTCDate(d.getUTCDate() + 4 - jourSemaine);
+  const debutAnnee = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  const semaineISO = Math.ceil((((d - debutAnnee) / 86400000) + 1) / 7);
+  return d.getUTCFullYear() + "-S" + String(semaineISO).padStart(2,"0");
+}
+function echapperHtml(texte){
+  const div = document.createElement('div');
+  div.textContent = texte || '';
+  return div.innerHTML;
+}
+function anneeScolaire(lundi){
+  const m = lundi.getMonth(); // 0=jan
+  const a = lundi.getFullYear();
+  return m >= 7 ? `${a}-${a+1}` : `${a-1}-${a}`;
+}
+function dateISO(d){
+  const dd = new Date(d);
+  dd.setHours(0,0,0,0);
+  return dd.getFullYear() + "-" + String(dd.getMonth()+1).padStart(2,"0") + "-" + String(dd.getDate()).padStart(2,"0");
+}
+function infoJourSpecial(date){
+  const iso = dateISO(date);
+
+  if(calendrier.debutAnnee && iso < calendrier.debutAnnee) return {type:"hors", nom:"Hors année scolaire"};
+  if(calendrier.finAnnee && iso > calendrier.finAnnee) return {type:"hors", nom:"Hors année scolaire"};
+
+  const ferie = (calendrier.feries||[]).find(f=>f.date === iso);
+  if(ferie) return {type:"ferie", nom:ferie.nom};
+
+  const vacances = (calendrier.vacances||[]).find(v=> iso >= v.debut && iso <= v.fin);
+  if(vacances) return {type:"vacances", nom:vacances.nom};
+
+  return null;
+}
+function calculerPaques(annee){
+  // Algorithme de calcul du dimanche de Pâques (Meeus/Jones/Butcher)
+  const a = annee % 19, b = Math.floor(annee/100), c = annee % 100;
+  const d = Math.floor(b/4), e = b % 4, f = Math.floor((b+8)/25);
+  const g = Math.floor((b-f+1)/3), h = (19*a+b-d-g+15) % 30;
+  const i = Math.floor(c/4), k = c % 4, l = (32+2*e+2*i-h-k) % 7;
+  const m = Math.floor((a+11*h+22*l)/451);
+  const mois = Math.floor((h+l-7*m+114)/31);
+  const jour = ((h+l-7*m+114) % 31) + 1;
+  return new Date(annee, mois-1, jour);
+}
+
+/* ================= RENDU ================= */
+function majLabelSemaine(){
+  const lundi = dateReference;
+  const vendredi = new Date(lundi); vendredi.setDate(lundi.getDate()+4);
+  document.getElementById('labelSemaine').innerHTML =
+    `Semaine du ${formatDate(lundi)} au ${formatDate(vendredi)}<small>Année scolaire ${anneeScolaire(lundi)}</small>`;
+}
+
+function offsetJour(nomJour){
+  const map = {"Lundi":0,"Mardi":1,"Jeudi":3,"Vendredi":4};
+  return map[nomJour];
+}
+
+function construireGrille(){
+  const grille = document.getElementById('grilleJours');
+  grille.innerHTML = "";
+  const cle = cleSemaine(dateReference);
+  const donneesSemaine = baseDonnees[cle] || {};
+
+  JOURS.forEach(nomJour=>{
+    const dateJour = new Date(dateReference);
+    dateJour.setDate(dateReference.getDate() + offsetJour(nomJour));
+
+    const carte = document.createElement('div');
+    carte.className = 'jour-carte';
+
+    const entete = document.createElement('div');
+    entete.className = 'jour-entete';
+    entete.innerHTML = `<span>${nomJour}</span><span class="date-jour">${formatDate(dateJour)}</span>`;
+    carte.appendChild(entete);
+
+    const special = infoJourSpecial(dateJour);
+    if(special){
+      carte.classList.add('special');
+      const emoji = special.type === 'ferie' ? '🎌' : (special.type === 'vacances' ? '🏖️' : '📅');
+      const corpsSpecial = document.createElement('div');
+      corpsSpecial.className = 'jour-special-corps';
+      corpsSpecial.innerHTML = `<span class="emoji">${emoji}</span><span class="nom-special">${echapperHtml(special.nom)}</span>`;
+      carte.appendChild(corpsSpecial);
+      grille.appendChild(carte);
+      return;
+    }
+
+    const corps = document.createElement('div');
+    corps.className = 'jour-corps';
+
+    CATEGORIES.forEach(cat=>{
+      const bloc = document.createElement('div');
+      bloc.className = 'plat-bloc';
+      const valeur = (donneesSemaine[nomJour] && donneesSemaine[nomJour][cat.cle]) || "";
+
+      const etiquette = document.createElement('div');
+      etiquette.className = 'etiquette';
+      etiquette.textContent = cat.label;
+      bloc.appendChild(etiquette);
+
+      const contenu = document.createElement('div');
+      contenu.className = 'contenu' + (valeur ? '' : ' vide');
+      contenu.textContent = valeur || 'Non renseigné';
+      bloc.appendChild(contenu);
+
+      const zone = document.createElement('textarea');
+      zone.dataset.jour = nomJour;
+      zone.dataset.cat = cat.cle;
+      zone.value = valeur;
+      zone.rows = 2;
+      bloc.appendChild(zone);
+
+      corps.appendChild(bloc);
+    });
+
+    carte.appendChild(corps);
+    grille.appendChild(carte);
+  });
+
+  document.body.classList.toggle('mode-admin', estConnecte);
+}
+
+function yADesModifNonEnregistrees(){
+  if(!estConnecte) return false;
+  const cle = cleSemaine(dateReference);
+  const donneesSemaine = baseDonnees[cle] || {};
+  let modifie = false;
+  document.querySelectorAll('#grilleJours textarea').forEach(zone=>{
+    const valeurEnregistree = (donneesSemaine[zone.dataset.jour] && donneesSemaine[zone.dataset.jour][zone.dataset.cat]) || "";
+    if(zone.value.trim() !== valeurEnregistree) modifie = true;
+  });
+  return modifie;
+}
+function confirmerAbandon(){
+  if(yADesModifNonEnregistrees()){
+    return confirm("Des modifications n'ont pas été enregistrées. Continuer quand même et les perdre ?");
+  }
+  return true;
+}
+
+/* ================= NAVIGATION SEMAINE ================= */
+function definirSemaine(nouvelleDate){
+  dateReference = getLundiDeSemaine(nouvelleDate);
+  majLabelSemaine();
+  ecouterSemaine(cleSemaine(dateReference));
+  construireGrille();
+}
+document.getElementById('semainePrec').addEventListener('click', ()=>{
+  if(!confirmerAbandon()) return;
+  const precedente = new Date(dateReference);
+  precedente.setDate(precedente.getDate()-7);
+  definirSemaine(precedente);
+});
+document.getElementById('semaineSuiv').addEventListener('click', ()=>{
+  if(!confirmerAbandon()) return;
+  const suivante = new Date(dateReference);
+  suivante.setDate(suivante.getDate()+7);
+  definirSemaine(suivante);
+});
+
+/* ================= SIDEBAR ADMIN ================= */
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+
+function ouvrirSidebar(){
+  sidebar.classList.add('ouvert');
+  overlay.classList.add('actif');
+}
+function fermerSidebar(){
+  sidebar.classList.remove('ouvert');
+  overlay.classList.remove('actif');
+}
+document.getElementById('btnMenu').addEventListener('click', ouvrirSidebar);
+document.getElementById('btnFermerSidebar').addEventListener('click', fermerSidebar);
+overlay.addEventListener('click', fermerSidebar);
+
+document.getElementById('btnValiderCode').addEventListener('click', validerConnexion);
+document.getElementById('champCode').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') validerConnexion();
+});
+
+async function validerConnexion(){
+  const email = document.getElementById('champEmailAdmin').value.trim();
+  const motDePasse = document.getElementById('champCode').value;
+  document.getElementById('erreurCode').style.display = 'none';
+  try{
+    await signInWithEmailAndPassword(auth, email, motDePasse);
+  } catch(e){
+    document.getElementById('erreurCode').style.display = 'block';
+  }
+}
+
+onAuthStateChanged(auth, (utilisateur)=>{
+  estConnecte = !!utilisateur;
+  if(utilisateur){
+    document.getElementById('zoneConnexion').style.display = 'none';
+    document.getElementById('zoneConnecte').style.display = 'flex';
+    document.getElementById('champCode').value = "";
+  } else {
+    document.getElementById('zoneConnexion').style.display = 'block';
+    document.getElementById('zoneConnecte').style.display = 'none';
+  }
+  construireGrille();
+});
+
+document.getElementById('btnDeconnexion').addEventListener('click', async ()=>{
+  if(!confirmerAbandon()) return;
+  await signOut(auth);
+  fermerSidebar();
+});
+
+document.getElementById('btnEnregistrer').addEventListener('click', async ()=>{
+  const cle = cleSemaine(dateReference);
+  const donnees = baseDonnees[cle] ? {...baseDonnees[cle]} : {};
+
+  document.querySelectorAll('#grilleJours textarea').forEach(zone=>{
+    const jour = zone.dataset.jour;
+    const cat = zone.dataset.cat;
+    if(!donnees[jour]) donnees[jour] = {};
+    donnees[jour][cat] = zone.value.trim();
+  });
+
+  try{
+    await setDoc(doc(db,'semaines',cle), donnees);
+    const msg = document.getElementById('messageSauvegarde');
+    msg.style.display = 'block';
+    setTimeout(()=> msg.style.display = 'none', 2500);
+  }catch(e){
+    alert("Erreur lors de l'enregistrement : " + e.message);
+  }
+});
+
+/* ================= GÉNÉRATION PDF ================= */
+document.getElementById('btnPdf').addEventListener('click', ()=>{
+  const cle = cleSemaine(dateReference);
+  const donneesSemaine = baseDonnees[cle] || {};
+  const lundi = dateReference;
+  const vendredi = new Date(lundi); vendredi.setDate(lundi.getDate()+4);
+
+  document.getElementById('pdfSousTitre').textContent =
+    `Semaine du ${formatDate(lundi)} au ${formatDate(vendredi)} — Année scolaire ${anneeScolaire(lundi)}`;
+
+  const corps = document.getElementById('pdfCorpsTable');
+  corps.innerHTML = "";
+
+  JOURS.forEach(nomJour=>{
+    const dateJour = new Date(dateReference);
+    dateJour.setDate(dateReference.getDate() + offsetJour(nomJour));
+    const donneesJour = donneesSemaine[nomJour] || {};
+
+    const ligne = document.createElement('tr');
+    const special = infoJourSpecial(dateJour);
+    if(special){
+      ligne.innerHTML = `
+        <td class="nom-jour">${nomJour}<br><small>${formatDate(dateJour)}</small></td>
+        <td colspan="3" style="text-align:center;color:var(--gris);font-style:italic;">${echapperHtml(special.nom)}</td>
+      `;
+    } else {
+      ligne.innerHTML = `
+        <td class="nom-jour">${nomJour}<br><small>${formatDate(dateJour)}</small></td>
+        <td>${echapperHtml(donneesJour.entree) || '—'}</td>
+        <td>${echapperHtml(donneesJour.plat) || '—'}</td>
+        <td>${echapperHtml(donneesJour.dessert) || '—'}</td>
+      `;
+    }
+    corps.appendChild(ligne);
+  });
+
+  window.print();
+});
+
+window.addEventListener('beforeunload', (e)=>{
+  if(yADesModifNonEnregistrees()){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+/* ================= GESTION DU CALENDRIER ================= */
+const overlayCalendrier = document.getElementById('overlayCalendrier');
+const modalCalendrier = document.getElementById('modalCalendrier');
+
+function ouvrirModalCalendrier(){
+  document.getElementById('champDebutAnnee').value = calendrier.debutAnnee || "";
+  document.getElementById('champFinAnnee').value = calendrier.finAnnee || "";
+  rafraichirListeVacances();
+  rafraichirListeFeries();
+  overlayCalendrier.classList.add('actif');
+  modalCalendrier.classList.add('ouvert');
+}
+function fermerModalCalendrier(){
+  overlayCalendrier.classList.remove('actif');
+  modalCalendrier.classList.remove('ouvert');
+}
+document.getElementById('btnCalendrier').addEventListener('click', ()=>{
+  fermerSidebar();
+  ouvrirModalCalendrier();
+});
+document.getElementById('btnFermerCalendrier').addEventListener('click', fermerModalCalendrier);
+overlayCalendrier.addEventListener('click', fermerModalCalendrier);
+
+/* --- Année scolaire --- */
+document.getElementById('btnSauverAnnee').addEventListener('click', ()=>{
+  const debut = document.getElementById('champDebutAnnee').value;
+  const fin = document.getElementById('champFinAnnee').value;
+  if(debut && fin && debut > fin){
+    alert("La date de rentrée doit être avant la date de fin d'année.");
+    return;
+  }
+  calendrier.debutAnnee = debut;
+  calendrier.finAnnee = fin;
+  sauvegarderCalendrier();
+  construireGrille();
+  alert("Dates de l'année scolaire enregistrées ✔");
+});
+
+/* --- Vacances --- */
+function rafraichirListeVacances(){
+  const liste = document.getElementById('listeVacances');
+  liste.innerHTML = "";
+  const vacances = calendrier.vacances || [];
+  if(vacances.length === 0){
+    liste.innerHTML = '<li class="vide">Aucune période de vacances ajoutée</li>';
+    return;
+  }
+  vacances
+    .slice()
+    .sort((a,b)=> a.debut.localeCompare(b.debut))
+    .forEach(v=>{
+      const li = document.createElement('li');
+      const idx = calendrier.vacances.indexOf(v);
+      li.innerHTML = `<span class="infos-item">${echapperHtml(v.nom)}<small>${formatDateLisible(v.debut)} → ${formatDateLisible(v.fin)}</small></span><button data-idx="${idx}" class="btn-suppr-vacances">🗑️</button>`;
+      liste.appendChild(li);
+    });
+  document.querySelectorAll('.btn-suppr-vacances').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      calendrier.vacances.splice(Number(btn.dataset.idx),1);
+      sauvegarderCalendrier();
+      rafraichirListeVacances();
+      construireGrille();
+    });
+  });
+}
+function formatDateLisible(iso){
+  if(!iso) return "";
+  const [a,m,j] = iso.split("-");
+  return `${j}/${m}/${a}`;
+}
+document.getElementById('btnAjouterVacances').addEventListener('click', ()=>{
+  const nom = document.getElementById('champNomVacances').value.trim();
+  const debut = document.getElementById('champDebutVacances').value;
+  const fin = document.getElementById('champFinVacances').value;
+  if(!nom || !debut || !fin){
+    alert("Merci de remplir le nom, la date de début et la date de fin.");
+    return;
+  }
+  if(debut > fin){
+    alert("La date de début doit être avant la date de fin.");
+    return;
+  }
+  if(!calendrier.vacances) calendrier.vacances = [];
+  calendrier.vacances.push({nom, debut, fin});
+  sauvegarderCalendrier();
+  document.getElementById('champNomVacances').value = "";
+  document.getElementById('champDebutVacances').value = "";
+  document.getElementById('champFinVacances').value = "";
+  rafraichirListeVacances();
+  construireGrille();
+});
+
+/* --- Jours fériés --- */
+function rafraichirListeFeries(){
+  const liste = document.getElementById('listeFeries');
+  liste.innerHTML = "";
+  const feries = calendrier.feries || [];
+  if(feries.length === 0){
+    liste.innerHTML = '<li class="vide">Aucun jour férié ajouté</li>';
+    return;
+  }
+  feries
+    .slice()
+    .sort((a,b)=> a.date.localeCompare(b.date))
+    .forEach(f=>{
+      const li = document.createElement('li');
+      const idx = calendrier.feries.indexOf(f);
+      li.innerHTML = `<span class="infos-item">${echapperHtml(f.nom)}<small>${formatDateLisible(f.date)}</small></span><button data-idx="${idx}" class="btn-suppr-ferie">🗑️</button>`;
+      liste.appendChild(li);
+    });
+  document.querySelectorAll('.btn-suppr-ferie').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      calendrier.feries.splice(Number(btn.dataset.idx),1);
+      sauvegarderCalendrier();
+      rafraichirListeFeries();
+      construireGrille();
+    });
+  });
+}
+document.getElementById('btnAjouterFerie').addEventListener('click', ()=>{
+  const nom = document.getElementById('champNomFerie').value.trim();
+  const date = document.getElementById('champDateFerie').value;
+  if(!nom || !date){
+    alert("Merci de remplir le nom et la date.");
+    return;
+  }
+  if(!calendrier.feries) calendrier.feries = [];
+  if(calendrier.feries.some(f=>f.date === date)){
+    alert("Un jour férié existe déjà à cette date.");
+    return;
+  }
+  calendrier.feries.push({nom, date});
+  sauvegarderCalendrier();
+  document.getElementById('champNomFerie').value = "";
+  document.getElementById('champDateFerie').value = "";
+  rafraichirListeFeries();
+  construireGrille();
+});
+
+document.getElementById('btnAutoFeries').addEventListener('click', ()=>{
+  const anneeDebut = calendrier.debutAnnee ? Number(calendrier.debutAnnee.slice(0,4)) : new Date().getFullYear();
+  const anneeFin = calendrier.finAnnee ? Number(calendrier.finAnnee.slice(0,4)) : anneeDebut + 1;
+
+  if(!calendrier.feries) calendrier.feries = [];
+  let ajoutes = 0;
+
+  for(let annee = anneeDebut; annee <= anneeFin; annee++){
+    const paques = calculerPaques(annee);
+    const lundiPaques = new Date(paques); lundiPaques.setDate(paques.getDate()+1);
+    const ascension = new Date(paques); ascension.setDate(paques.getDate()+39);
+    const lundiPentecote = new Date(paques); lundiPentecote.setDate(paques.getDate()+50);
+
+    const candidats = [
+      {nom:"Jour de l'an", date: dateISO(new Date(annee,0,1))},
+      {nom:"Lundi de Pâques", date: dateISO(lundiPaques)},
+      {nom:"Fête du travail", date: dateISO(new Date(annee,4,1))},
+      {nom:"Victoire 1945", date: dateISO(new Date(annee,4,8))},
+      {nom:"Ascension", date: dateISO(ascension)},
+      {nom:"Lundi de Pentecôte", date: dateISO(lundiPentecote)},
+      {nom:"Fête nationale", date: dateISO(new Date(annee,6,14))},
+      {nom:"Assomption", date: dateISO(new Date(annee,7,15))},
+      {nom:"Toussaint", date: dateISO(new Date(annee,10,1))},
+      {nom:"Armistice", date: dateISO(new Date(annee,10,11))},
+      {nom:"Noël", date: dateISO(new Date(annee,11,25))}
+    ];
+
+    candidats.forEach(c=>{
+      // n'ajoute que si dans la période de l'année scolaire et pas déjà présent
+      if(calendrier.debutAnnee && c.date < calendrier.debutAnnee) return;
+      if(calendrier.finAnnee && c.date > calendrier.finAnnee) return;
+      if(calendrier.feries.some(f=>f.date === c.date)) return;
+      calendrier.feries.push(c);
+      ajoutes++;
+    });
+  }
+
+  sauvegarderCalendrier();
+  rafraichirListeFeries();
+  construireGrille();
+  alert(ajoutes > 0 ? `${ajoutes} jour(s) férié(s) ajouté(s) ✔` : "Tous les jours fériés de cette période sont déjà renseignés.");
+});
+
+/* ================= INITIALISATION ================= */
+definirSemaine(dateReference);
+</script>
+</body>
+</html>
